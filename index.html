@@ -279,6 +279,12 @@
   </section>
 
   <section class="block">
+    <h2>Weekly</h2>
+    <p class="block-sub">Once-a-week tasks. Check off as you go — clears at the start of each week.</p>
+    <ul class="chores" id="weeklyList"></ul>
+  </section>
+
+  <section class="block">
     <h2>Monthly round</h2>
     <p class="block-sub">Easy-to-forget tasks. Check off as you go — clears at the start of each month.</p>
     <ul class="chores" id="monthlyList"></ul>
@@ -331,6 +337,14 @@ const DAY_CHORE = {
   Sun: "Light reset + meal prep"
 };
 
+const WEEKLY_ITEMS = [
+  "Change sheets",
+  "Grocery run / meal plan",
+  "Mop floors",
+  "Clean bathrooms mirrors + surfaces",
+  "Yard waste / recycling out"
+];
+
 const MONTHLY_ITEMS = [
   "Baseboards / light switches",
   "Fridge / pantry cleanout",
@@ -343,6 +357,12 @@ function todayKey(offsetDays){
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
   return d.toISOString().slice(0,10);
+}
+function weekKey(){
+  const d = new Date();
+  const sunday = new Date(d);
+  sunday.setDate(d.getDate() - d.getDay());
+  return sunday.toISOString().slice(0,10);
 }
 function monthKey(){
   const d = new Date();
@@ -424,6 +444,30 @@ function updateProgress(items, saved){
   document.getElementById("progressLabel").textContent = `${done} of ${items.length}`;
 }
 
+function renderWeekly(){
+  const storageKey = "daybook-weekly-" + weekKey();
+  const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+  const list = document.getElementById("weeklyList");
+  list.innerHTML = "";
+  WEEKLY_ITEMS.forEach((text, i) => {
+    const id = "weekly-" + i;
+    const li = document.createElement("li");
+    li.className = "li-wrap";
+    li.innerHTML = `
+      <input type="checkbox" class="chore-input" id="${id}" ${saved[text] ? "checked" : ""}>
+      <label class="chore-label" for="${id}">
+        <span class="chore-check">${checkmarkSVG()}</span>
+        <span class="chore-text">${text}</span>
+      </label>`;
+    list.appendChild(li);
+    li.querySelector("input").addEventListener("change", (e) => {
+      const s = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      s[text] = e.target.checked;
+      localStorage.setItem(storageKey, JSON.stringify(s));
+    });
+  });
+}
+
 function renderMonthly(){
   const storageKey = "daybook-monthly-" + monthKey();
   const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
@@ -452,6 +496,7 @@ function render(){
   renderDayNav();
   renderSchedule();
   renderChores();
+  renderWeekly();
   renderMonthly();
 }
 

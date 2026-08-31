@@ -1,4 +1,4 @@
-const CACHE = "daybook-v1";
+const CACHE = "daybook-v2";
 const ASSETS = [
   "./",
   "./index.html",
