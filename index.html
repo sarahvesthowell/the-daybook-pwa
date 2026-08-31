@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>The Daybook</title>
+<meta name="theme-color" content="#A24936" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --parchment:#F2EDE1;
+    --parchment-line:#DCD2BC;
+    --ink:#2B2620;
+    --ink-soft:#5A5142;
+    --clay:#A24936;
+    --clay-dark:#7E3527;
+    --sage:#6B7A5E;
+    --sage-soft:#DDE3D3;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding-bottom:3rem;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    padding:2.2rem 1.5rem 1rem;
+    max-width:640px;
+    margin:0 auto;
+  }
+  .kicker{
+    font-size:0.8rem;
+    color:var(--clay-dark);
+    letter-spacing:0.02em;
+    margin:0 0 0.3rem;
+  }
+  h1{
+    font-family:'Source Serif 4',serif;
+    font-weight:700;
+    font-size:2rem;
+    margin:0 0 0.15rem;
+    line-height:1.1;
+  }
+  .dateline{
+    font-size:0.95rem;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  nav.days{
+    display:flex;
+    max-width:640px;
+    margin:1.4rem auto 0;
+    padding:0 1.5rem;
+    border-bottom:1px solid var(--parchment-line);
+    overflow-x:auto;
+    gap:0.25rem;
+  }
+  nav.days button{
+    background:none;
+    border:none;
+    font-family:'Inter',sans-serif;
+    font-size:0.92rem;
+    color:var(--ink-soft);
+    padding:0.6rem 0.75rem 0.7rem;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+    flex:1;
+  }
+  nav.days button.active{
+    color:var(--clay-dark);
+    border-bottom:2px solid var(--clay);
+    font-weight:600;
+  }
+  nav.days button.is-today::after{
+    content:"";
+    display:block;
+    width:5px;height:5px;
+    border-radius:50%;
+    background:var(--sage);
+    margin:4px auto 0;
+  }
+  main{
+    max-width:640px;
+    margin:0 auto;
+    padding:1.6rem 1.5rem 0;
+  }
+  section.block{
+    margin-bottom:2rem;
+  }
+  section.block h2{
+    font-family:'Source Serif 4',serif;
+    font-size:1.15rem;
+    font-weight:600;
+    margin:0 0 0.2rem;
+    color:var(--ink);
+  }
+  .block-sub{
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    margin:0 0 0.9rem;
+  }
+  .schedule-item{
+    display:flex;
+    gap:0.9rem;
+    padding:0.55rem 0;
+    border-bottom:1px solid var(--parchment-line);
+    font-size:0.94rem;
+  }
+  .schedule-item:last-child{border-bottom:none;}
+  .schedule-time{
+    color:var(--clay-dark);
+    font-variant-numeric:tabular-nums;
+    min-width:5.4rem;
+    flex-shrink:0;
+    font-weight:500;
+  }
+  .schedule-note{
+    color:var(--ink-soft);
+    font-size:0.85rem;
+    font-style:italic;
+  }
+  ul.chores{
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+  ul.chores li{
+    border-bottom:1px solid var(--parchment-line);
+  }
+  ul.chores li:last-child{border-bottom:none;}
+  .chore-label{
+    display:flex;
+    align-items:center;
+    gap:0.8rem;
+    padding:0.7rem 0.1rem;
+    cursor:pointer;
+    font-size:0.98rem;
+  }
+  .chore-check{
+    width:1.35rem;
+    height:1.35rem;
+    border:1.5px solid var(--ink-soft);
+    border-radius:3px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+  }
+  .chore-check svg{
+    width:0.9rem;height:0.9rem;
+    opacity:0;
+    stroke:var(--parchment);
+  }
+  input.chore-input{
+    position:absolute;
+    opacity:0;
+    width:0;height:0;
+  }
+  input.chore-input:checked + .chore-label .chore-check{
+    background:var(--clay);
+    border-color:var(--clay);
+  }
+  input.chore-input:checked + .chore-label .chore-check svg{
+    opacity:1;
+  }
+  input.chore-input:checked + .chore-label .chore-text{
+    color:var(--ink-soft);
+    text-decoration:line-through;
+    text-decoration-color:var(--parchment-line);
+  }
+  .li-wrap{position:relative;}
+  .progress-row{
+    display:flex;
+    align-items:center;
+    gap:0.7rem;
+    margin-top:1.6rem;
+    padding-top:1rem;
+    border-top:1px solid var(--parchment-line);
+  }
+  .progress-track{
+    flex:1;
+    height:6px;
+    background:var(--parchment-line);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--sage);
+    border-radius:3px;
+    transition:width 0.25s ease;
+  }
+  .progress-label{
+    font-size:0.8rem;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .notify-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    background:var(--sage-soft);
+    border-radius:8px;
+    padding:0.9rem 1rem;
+    margin-top:0.5rem;
+  }
+  .notify-row p{
+    margin:0;
+    font-size:0.82rem;
+    color:var(--ink-soft);
+    line-height:1.4;
+  }
+  .notify-btn{
+    background:var(--clay);
+    color:var(--parchment);
+    border:none;
+    border-radius:6px;
+    padding:0.55rem 0.9rem;
+    font-size:0.85rem;
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .notify-btn:disabled{
+    background:var(--parchment-line);
+    color:var(--ink-soft);
+    cursor:default;
+  }
+  footer{
+    max-width:640px;
+    margin:0 auto;
+    padding:1rem 1.5rem 2rem;
+    font-size:0.78rem;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="kicker">The Daybook</p>
+  <h1>Today's line</h1>
+  <p class="dateline" id="dateline"></p>
+</header>
+
+<nav class="days" id="dayNav"></nav>
+
+<main>
+  <section class="block">
+    <h2>Schedule</h2>
+    <p class="block-sub" id="scheduleSub"></p>
+    <div id="scheduleList"></div>
+  </section>
+
+  <section class="block">
+    <h2>Chores</h2>
+    <p class="block-sub">Daily basics plus today's rotation. Resets each morning.</p>
+    <ul class="chores" id="choreList"></ul>
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-label" id="progressLabel">0 of 0</span>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Monthly round</h2>
+    <p class="block-sub">Easy-to-forget tasks. Check off as you go — clears at the start of each month.</p>
+    <ul class="chores" id="monthlyList"></ul>
+  </section>
+
+  <section class="block">
+    <div class="notify-row">
+      <p id="notifyText">Turn on reminders to get a nudge at the start of each schedule block while the Daybook is open.</p>
+      <button class="notify-btn" id="notifyBtn">Enable</button>
+    </div>
+  </section>
+</main>
+
+<footer>Installed as an app, your checks stay on this device.</footer>
+
+<script>
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const DAY_LABELS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+const BASE_SCHEDULE = [
+  ["6:00", "Move cows"],
+  ["6:30", "Quick home workout"],
+  ["6:45", "Shower / buffer"],
+  ["7:00", "Get son ready"],
+  ["7:30", "Drop-off"],
+  ["7:50", "Home — reset the house, start laundry"],
+  ["8:00", "Work block one"],
+  ["12:00", "Lunch — switch the laundry"],
+  ["1:00", "Work block two"],
+  ["2:30", "Wrap work, head to pickup"],
+  ["3:30", "Post-pickup — kid time, afternoon tidy"],
+  ["5:30", "Start dinner"]
+];
+
+const DAY_OVERRIDES = {
+  Tue: { note: "Nanny morning — best window for focused work once you're back from drop-off." },
+  Thu: { note: "Nanny morning — best window for focused work once you're back from drop-off." },
+  Wed: { note: "Networking event this morning — work block one shifts around it." }
+};
+
+const DAILY_CHORES = ["Dishes", "One load of laundry", "Vacuum / sweep high-traffic areas", "Quick tidy"];
+
+const DAY_CHORE = {
+  Mon: "Bathrooms",
+  Tue: "Deep kitchen clean",
+  Wed: "Deeper vacuum — under furniture, edges, stairs",
+  Thu: "Bedrooms — sheets, dust, declutter",
+  Fri: "Laundry catch-up + trash / recycling out",
+  Sat: "Flex day — rotating seasonal task",
+  Sun: "Light reset + meal prep"
+};
+
+const MONTHLY_ITEMS = [
+  "Baseboards / light switches",
+  "Fridge / pantry cleanout",
+  "Under furniture / behind appliances",
+  "Bedding beyond sheets",
+  "Light fixtures / ceiling fans"
+];
+
+function todayKey(offsetDays){
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0,10);
+}
+function monthKey(){
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}`;
+}
+
+const realTodayIdx = new Date().getDay();
+let selectedIdx = realTodayIdx;
+
+function checkmarkSVG(){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+}
+
+function renderDayNav(){
+  const nav = document.getElementById("dayNav");
+  nav.innerHTML = "";
+  DAYS.forEach((d, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = d;
+    if (i === selectedIdx) btn.classList.add("active");
+    if (i === realTodayIdx) btn.classList.add("is-today");
+    btn.addEventListener("click", () => { selectedIdx = i; render(); });
+    nav.appendChild(btn);
+  });
+}
+
+function renderSchedule(){
+  const key = DAYS[selectedIdx];
+  document.getElementById("dateline").textContent = DAY_LABELS[selectedIdx] + (selectedIdx === realTodayIdx ? " · today" : "");
+  document.getElementById("scheduleSub").textContent = DAY_OVERRIDES[key]?.note || "Standard morning — cows, workout, drop-off, two work blocks.";
+  const list = document.getElementById("scheduleList");
+  list.innerHTML = "";
+  BASE_SCHEDULE.forEach(([time, label]) => {
+    const row = document.createElement("div");
+    row.className = "schedule-item";
+    row.innerHTML = `<span class="schedule-time">${time}</span><span>${label}</span>`;
+    list.appendChild(row);
+  });
+}
+
+function storageKeyForChores(){
+  const offset = selectedIdx - realTodayIdx;
+  return "daybook-chores-" + todayKey(offset === 0 ? 0 : 0) + "-" + DAYS[selectedIdx];
+}
+
+function renderChores(){
+  const key = DAYS[selectedIdx];
+  const items = [...DAILY_CHORES, DAY_CHORE[key]];
+  const storageKey = "daybook-chores-" + todayKey(selectedIdx === realTodayIdx ? 0 : 0) + "-" + key;
+  const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+
+  const list = document.getElementById("choreList");
+  list.innerHTML = "";
+  items.forEach((text, i) => {
+    const id = "chore-" + i;
+    const li = document.createElement("li");
+    li.className = "li-wrap";
+    li.innerHTML = `
+      <input type="checkbox" class="chore-input" id="${id}" ${saved[text] ? "checked" : ""}>
+      <label class="chore-label" for="${id}">
+        <span class="chore-check">${checkmarkSVG()}</span>
+        <span class="chore-text">${text}</span>
+      </label>`;
+    list.appendChild(li);
+    li.querySelector("input").addEventListener("change", (e) => {
+      const s = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      s[text] = e.target.checked;
+      localStorage.setItem(storageKey, JSON.stringify(s));
+      updateProgress(items, s);
+    });
+  });
+  updateProgress(items, saved);
+}
+
+function updateProgress(items, saved){
+  const done = items.filter(t => saved[t]).length;
+  const pct = items.length ? Math.round((done/items.length)*100) : 0;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressLabel").textContent = `${done} of ${items.length}`;
+}
+
+function renderMonthly(){
+  const storageKey = "daybook-monthly-" + monthKey();
+  const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+  const list = document.getElementById("monthlyList");
+  list.innerHTML = "";
+  MONTHLY_ITEMS.forEach((text, i) => {
+    const id = "monthly-" + i;
+    const li = document.createElement("li");
+    li.className = "li-wrap";
+    li.innerHTML = `
+      <input type="checkbox" class="chore-input" id="${id}" ${saved[text] ? "checked" : ""}>
+      <label class="chore-label" for="${id}">
+        <span class="chore-check">${checkmarkSVG()}</span>
+        <span class="chore-text">${text}</span>
+      </label>`;
+    list.appendChild(li);
+    li.querySelector("input").addEventListener("change", (e) => {
+      const s = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      s[text] = e.target.checked;
+      localStorage.setItem(storageKey, JSON.stringify(s));
+    });
+  });
+}
+
+function render(){
+  renderDayNav();
+  renderSchedule();
+  renderChores();
+  renderMonthly();
+}
+
+render();
+
+// --- Best-effort in-app reminders (fire only while the Daybook is open) ---
+const notifyBtn = document.getElementById("notifyBtn");
+const notifyText = document.getElementById("notifyText");
+let notifyTimer = null;
+
+function scheduleReminders(){
+  if (notifyTimer) clearInterval(notifyTimer);
+  let firedToday = new Set();
+  notifyTimer = setInterval(() => {
+    const now = new Date();
+    const hhmm = now.toTimeString().slice(0,5);
+    const todayKeyStr = todayKey(0);
+    BASE_SCHEDULE.forEach(([time, label]) => {
+      const target = time.length === 4 ? "0"+time : time;
+      if (hhmm === target){
+        const fireId = todayKeyStr + target;
+        if (!firedToday.has(fireId)){
+          firedToday.add(fireId);
+          new Notification("The Daybook", { body: label, icon: "icons/icon-192.png" });
+        }
+      }
+    });
+  }, 20000);
+}
+
+if (!("Notification" in window)) {
+  notifyText.textContent = "Reminders aren't supported in this browser.";
+  notifyBtn.disabled = true;
+} else if (Notification.permission === "granted") {
+  notifyText.textContent = "Reminders are on — you'll get a nudge at each block while the Daybook is open.";
+  notifyBtn.textContent = "On";
+  notifyBtn.disabled = true;
+  scheduleReminders();
+}
+
+notifyBtn.addEventListener("click", async () => {
+  const perm = await Notification.requestPermission();
+  if (perm === "granted") {
+    notifyText.textContent = "Reminders are on — you'll get a nudge at each block while the Daybook is open.";
+    notifyBtn.textContent = "On";
+    notifyBtn.disabled = true;
+    scheduleReminders();
+  } else {
+    notifyText.textContent = "Reminders need notification permission — you can enable this in your browser or phone settings.";
+  }
+});
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
