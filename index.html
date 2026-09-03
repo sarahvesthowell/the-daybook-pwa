@@ -31,7 +31,7 @@
     color:var(--ink);
     font-family:'Inter',sans-serif;
     min-height:100vh;
-    padding-bottom:3rem;
+    padding-bottom:calc(4.6rem + env(safe-area-inset-bottom));
     -webkit-font-smoothing:antialiased;
   }
   header{
@@ -307,6 +307,47 @@
     font-style:italic;
     padding:0.5rem 0;
   }
+  .view{display:none;}
+  .view.active{display:block;}
+  .bottom-nav{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    display:flex;
+    max-width:640px;
+    margin:0 auto;
+    background:var(--parchment);
+    border-top:1px solid var(--parchment-line);
+    padding:0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom));
+    z-index:10;
+  }
+  .bn-btn{
+    flex:1;
+    background:none;
+    border:none;
+    border-top:2px solid transparent;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0.15rem;
+    padding:0.5rem 0.2rem 0.3rem;
+    font-family:'Inter',sans-serif;
+    font-size:0.78rem;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .bn-btn .bn-icon{
+    width:1.3rem;height:1.3rem;
+    stroke:currentColor;
+    fill:none;
+    stroke-width:1.8;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  .bn-btn.active{
+    color:var(--clay-dark);
+    font-weight:600;
+    border-top-color:var(--clay);
+  }
 </style>
 </head>
 <body>
@@ -320,53 +361,74 @@
 <nav class="days" id="dayNav"></nav>
 
 <main>
-  <section class="block">
-    <h2>Schedule</h2>
-    <p class="block-sub" id="scheduleSub"></p>
-    <div id="scheduleList"></div>
-  </section>
+  <div class="view active" data-view="today">
+    <section class="block">
+      <h2>Schedule</h2>
+      <p class="block-sub" id="scheduleSub"></p>
+      <div id="scheduleList"></div>
+    </section>
 
-  <section class="block">
-    <h2>Work Tasks</h2>
-    <p class="block-sub">Running list — add as they come up, check off when done, remove when cleared.</p>
-    <form class="task-form" id="taskForm">
-      <input type="text" id="taskInput" placeholder="Add a task…" autocomplete="off">
-      <button type="submit" class="task-add-btn">Add</button>
-    </form>
-    <ul class="chores" id="taskList"></ul>
-  </section>
+    <section class="block">
+      <h2>Chores</h2>
+      <p class="block-sub">Daily basics plus today's rotation. Resets each morning.</p>
+      <ul class="chores" id="choreList"></ul>
+      <div class="progress-row">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-label" id="progressLabel">0 of 0</span>
+      </div>
+    </section>
 
-  <section class="block">
-    <h2>Chores</h2>
-    <p class="block-sub">Daily basics plus today's rotation. Resets each morning.</p>
-    <ul class="chores" id="choreList"></ul>
-    <div class="progress-row">
-      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-      <span class="progress-label" id="progressLabel">0 of 0</span>
-    </div>
-  </section>
+    <section class="block">
+      <div class="notify-row">
+        <p id="notifyText">Turn on reminders to get a nudge at the start of each schedule block while the Daybook is open.</p>
+        <button class="notify-btn" id="notifyBtn">Enable</button>
+      </div>
+    </section>
+  </div>
 
-  <section class="block">
-    <h2>Weekly</h2>
-    <p class="block-sub">Once-a-week tasks. Check off as you go — clears at the start of each week.</p>
-    <ul class="chores" id="weeklyList"></ul>
-  </section>
+  <div class="view" data-view="tasks">
+    <section class="block">
+      <h2>Work Tasks</h2>
+      <p class="block-sub">Running list — add as they come up, check off when done, remove when cleared.</p>
+      <form class="task-form" id="taskForm">
+        <input type="text" id="taskInput" placeholder="Add a task…" autocomplete="off">
+        <button type="submit" class="task-add-btn">Add</button>
+      </form>
+      <ul class="chores" id="taskList"></ul>
+    </section>
+  </div>
 
-  <section class="block">
-    <h2>Monthly round</h2>
-    <p class="block-sub">Easy-to-forget tasks. Check off as you go — clears at the start of each month.</p>
-    <ul class="chores" id="monthlyList"></ul>
-  </section>
+  <div class="view" data-view="routines">
+    <section class="block">
+      <h2>Weekly</h2>
+      <p class="block-sub">Once-a-week tasks. Check off as you go — clears at the start of each week.</p>
+      <ul class="chores" id="weeklyList"></ul>
+    </section>
 
-  <section class="block">
-    <div class="notify-row">
-      <p id="notifyText">Turn on reminders to get a nudge at the start of each schedule block while the Daybook is open.</p>
-      <button class="notify-btn" id="notifyBtn">Enable</button>
-    </div>
-  </section>
+    <section class="block">
+      <h2>Monthly round</h2>
+      <p class="block-sub">Easy-to-forget tasks. Check off as you go — clears at the start of each month.</p>
+      <ul class="chores" id="monthlyList"></ul>
+    </section>
+  </div>
 </main>
 
 <footer>Installed as an app, your checks stay on this device.</footer>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-btn" data-view="today">
+    <svg class="bn-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+    <span>Today</span>
+  </button>
+  <button class="bn-btn" data-view="tasks">
+    <svg class="bn-icon" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+    <span>Tasks</span>
+  </button>
+  <button class="bn-btn" data-view="routines">
+    <svg class="bn-icon" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 23l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+    <span>Routines</span>
+  </button>
+</nav>
 
 <script>
 const DAYS = ["Mon","Tue","Wed","Thu","Fri"];
@@ -634,6 +696,22 @@ function render(){
 
 render();
 renderTasks();
+
+const VIEW_KEY = "daybook-active-view";
+const VIEWS = ["today", "tasks", "routines"];
+
+function setActiveView(view){
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.dataset.view === view));
+  document.querySelectorAll(".bn-btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  localStorage.setItem(VIEW_KEY, view);
+}
+
+document.querySelectorAll(".bn-btn").forEach(btn => {
+  btn.addEventListener("click", () => setActiveView(btn.dataset.view));
+});
+
+const savedView = localStorage.getItem(VIEW_KEY);
+setActiveView(VIEWS.includes(savedView) ? savedView : "today");
 
 // --- Best-effort in-app reminders (fire only while the Daybook is open) ---
 const notifyBtn = document.getElementById("notifyBtn");
